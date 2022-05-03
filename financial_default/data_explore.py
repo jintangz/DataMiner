@@ -1,7 +1,7 @@
 import pandas as pd
 
 from tryTorch.CSVDataReader import CSVDataReader
-from tryTorch.DataCompression import DataCompressor
+from tryTorch.DataCompressor import DataCompressor
 
 if __name__ == '__main__':
     import configparser

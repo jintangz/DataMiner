@@ -12,27 +12,27 @@ class DataCompressor(object):
         for col in df.columns:
             col_type = df[col].dtypes
             if col_type in numerics:
-                c_min = df[col].min()
-                c_max = df[col].max()
+                c_min = df[col].min(skipna=True)
+                c_max = df[col].max(skipna=True)
                 if pd.isnull(c_min) or pd.isnull(c_max):
                     logger.warning(f"{col}'s min or max is null, please check!")
                     continue
                 if str(col_type)[:3] == 'int':
                     if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-                        df[col] = df[col].astype(np.int8)
+                        df[col] = df[col].astype(np.int8, errors='ignore')
                     elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-                        df[col] = df[col].astype(np.int16)
+                        df[col] = df[col].astype(np.int16, errors='ignore')
                     elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-                        df[col] = df[col].astype(np.int32)
+                        df[col] = df[col].astype(np.int32, errors='ignore')
                     elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
-                        df[col] = df[col].astype(np.int64)
+                        df[col] = df[col].astype(np.int64, errors='ignore')
                 else:
                     if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                        df[col] = df[col].astype(np.float16)
+                        df[col] = df[col].astype(np.float16, errors='ignore')
                     elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                        df[col] = df[col].astype(np.float32)
+                        df[col] = df[col].astype(np.float32, errors='ignore')
                     else:
-                        df[col] = df[col].astype(np.float64)
+                        df[col] = df[col].astype(np.float64, errors='ignore')
         end_mem = df.memory_usage().sum() / 1024 ** 2
         logger.info('-- Mem. usage decreased to {:5.2f} Mb ({:.1f}% reduction)'\
               .format(end_mem,100 * (start_mem - end_mem) / start_mem))

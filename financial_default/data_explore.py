@@ -6,7 +6,7 @@ from tryTorch.DataCompression import DataCompressor
 if __name__ == '__main__':
     import configparser
     config = configparser.ConfigParser()
-    config.read(r'D:\newproject\financial_default\properties.ini')
+    config.read(r'D:\CodeProject\Python\financial_default\properties.ini')
     train_path = config["data_path"]["train_path"]
     test_path = config["data_path"]["test_path"]
     to_transform_features = config["to_transform_features"]["features"].split(",")

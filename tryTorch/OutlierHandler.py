@@ -12,13 +12,15 @@ class ThreeSigmaOutlierRecognizer(object):
         self.features = features
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
+        #存储异常值比率
+        self.outlier_stat = {}
         self.__data_type = ['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
     def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
         features.intersection_update(set(x_train.select_dtypes(self.__data_type).columns))
-        up_limit = x_train[features].mean() + x_train[features].std() * 3
-        bottom_limit = x_train[features].mean() - x_train[features].std() * 3
+        up_limit = x_train[features].mean(skipna=True) + x_train[features].std(skipna=True) * 3
+        bottom_limit = x_train[features].mean(skipna=True) - x_train[features].std(skipna=True) * 3
         self.features = features
         self.stat_statis.append((bottom_limit, up_limit))
         return self.transform(x_train)
@@ -28,6 +30,7 @@ class ThreeSigmaOutlierRecognizer(object):
         bottom = self.stat_statis[0][0]
         up = self.stat_statis[0][1]
         for feature in self.features:
+
             x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & (x_new[feature] <= up.loc[feature]), :]
         return x_new
 

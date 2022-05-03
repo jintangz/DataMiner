@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 from typing import Mapping, AnyStr, List
 from enum import Enum
 
@@ -21,8 +21,10 @@ class ThreeSigmaOutlierRecognizer(object):
     def fit_transform(self, x_train: pd.DataFrame) -> pd.DataFrame:
         features = set(self.features)
         features.intersection_update(set(x_train.select_dtypes(self.__data_type).columns))
-        up_limit = x_train[features].mean(skipna=True) + x_train[features].std(skipna=True) * 3
-        bottom_limit = x_train[features].mean(skipna=True) - x_train[features].std(skipna=True) * 3
+        up_limit = x_train[features].astype(np.float64, errors='ignore').mean(skipna=True) + x_train[features].astype(
+            np.float64, errors='ignore').std(skipna=True) * 3
+        bottom_limit = x_train[features].astype(np.float64, errors='ignore').mean(skipna=True) - x_train[
+            features].astype(np.float64, errors='ignore').std(skipna=True) * 3
         self.features = features
         self.stat_statis.append((bottom_limit, up_limit))
         return self.transform(x_train)
@@ -34,6 +36,7 @@ class ThreeSigmaOutlierRecognizer(object):
         for feature in self.features:
             self.outlier_stat[feature] = len(
                 x.loc[~((x[feature] >= bottom.loc[feature]) & (x[feature] <= up.loc[feature])), :]) / len(x)
+
             x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & (x_new[feature] <= up.loc[feature]), :]
         return x_new
 

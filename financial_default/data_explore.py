@@ -27,5 +27,14 @@ if __name__ == '__main__':
     train_new.drop(columns=config["to_delete_features"]["features"].split(","), inplace=True)
     test_new = test_new[train_data.columns]
 
-    fq = FourthQuantileGapOutlierRecognizer(list(train_new.columns))
+    category_features = config["category_features"]["features"].split(",")
+    float_features = config["float_features"]["features"].split(",")
+    int_features = config["float_features"]["features"].split(",")
+    fq = FourthQuantileGapOutlierRecognizer(float_features)
     fq.fit_transform(train_new)
+    print(fq.outlier_stat)
+    ts = ThreeSigmaOutlierRecognizer(float_features)
+    print(train_new[float_features].info())
+    ts.fit_transform(train_new)
+    print(ts.stat_statis)
+

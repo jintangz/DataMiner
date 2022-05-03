@@ -13,7 +13,7 @@ class ThreeSigmaOutlierRecognizer(object):
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
 
-    def fit_transform(self, x_train:pd.DataFrame):
+    def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
         features.intersection_update(set(x_train.select_dtypes(['int','float']).columns))
         up_limit = x_train[features].mean() + x_train[features].std() * 3
@@ -22,7 +22,7 @@ class ThreeSigmaOutlierRecognizer(object):
         self.stat_statis.append((bottom_limit, up_limit))
         return self.transform(x_train)
 
-    def transform(self, x):
+    def transform(self, x)->pd.DataFrame:
         x_new = x.copy()
         bottom = self.stat_statis[0][0]
         up = self.stat_statis[0][1]
@@ -36,7 +36,7 @@ class FourthQuantileGapOutlierRecognizer(object):
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
 
-    def fit_transform(self, x_train:pd.DataFrame):
+    def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
         features.intersection_update(set(x_train.select_dtypes(['int', 'float']).columns))
         fourth_quantile_gap = x_train[features].quantile(0.75) - x_train[features].quantile(0.25)
@@ -46,7 +46,7 @@ class FourthQuantileGapOutlierRecognizer(object):
         self.features = features
         return self.transform(x_train)
 
-    def transform(self, x):
+    def transform(self, x)->pd.DataFrame:
         x_new = x.copy()
         bottom = self.stat_statis[0][0]
         up = self.stat_statis[0][1]
@@ -60,7 +60,7 @@ class ObjectNumberNotEnoughOutlierRecognizer(object):
         self.feature_type = FeatureType.CATEGORY
         self.stat_statis = {}
 
-    def fit_transform(self, x_train:pd.DataFrame):
+    def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.thresh.keys()).intersection(set(x_train.select_dtypes(['object'])))
         for feature in features:
             threshold = self.thresh[feature]
@@ -68,7 +68,7 @@ class ObjectNumberNotEnoughOutlierRecognizer(object):
             self.stat_statis[feature] = cnt.loc[cnt >= threshold].index
         return self.transform(x_train)
 
-    def transform(self, x):
+    def transform(self, x)->pd.DataFrame:
         x_new = x.copy()
         for feature, values in self.stat_statis.items():
            x_new = x_new.loc[x_new[feature].isin(values), :]

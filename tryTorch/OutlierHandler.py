@@ -38,7 +38,7 @@ class FourthQuantileGapOutlierRecognizer(object):
 
     def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
-        features.intersection_update(set(x_train.select_dtypes(['int', 'float']).columns))
+        features.intersection_update(set(x_train.select_dtypes(['int8','int16','int32','int64', 'float16','float32','float64']).columns))
         fourth_quantile_gap = x_train[features].quantile(0.75) - x_train[features].quantile(0.25)
         bottom_limit = x_train[features].quantile(0.25) - 1.5 * fourth_quantile_gap
         up_limit = x_train[features].quantile(0.75) + 1.5 * fourth_quantile_gap
@@ -76,10 +76,12 @@ class ObjectNumberNotEnoughOutlierRecognizer(object):
 
 if __name__ == '__main__':
     import numpy as np
-    df = pd.DataFrame({'col1': np.random.randn(1000), 'col2': ['abcdeftgs'[np.random.randint(0, 9)] for _ in range(1000)]})
-    # ts = FourthQuantileGapOutlierRecognizer(['col1'])
-    # print(ts.fit_transform(df))
+    df = pd.DataFrame({'col1': np.random.randn(1000),'col3':np.random.randn(1000), 'col2': ['abcdeftgs'[np.random.randint(0, 9)] for _ in range(1000)]})
+    ts = FourthQuantileGapOutlierRecognizer(['col1', 'col3'])
+    print(ts.fit_transform(df))
+    print(ts.stat_statis)
     # print(ts.transform(df))
-    sc = ObjectNumberNotEnoughOutlierRecognizer({'col2': 120})
-    print(sc.fit_transform(df))
-    print(sc.transform(df))
+    # sc = ObjectNumberNotEnoughOutlierRecognizer({'col2': 120})
+    # print(sc.fit_transform(df))
+    #
+    # print(sc.transform(df))

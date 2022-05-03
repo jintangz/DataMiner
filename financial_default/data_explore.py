@@ -2,7 +2,7 @@ import pandas as pd
 
 from tryTorch.CSVDataReader import CSVDataReader
 from tryTorch.DataCompressor import DataCompressor
-
+from tryTorch.OutlierHandler import FourthQuantileGapOutlierRecognizer, ThreeSigmaOutlierRecognizer
 if __name__ == '__main__':
     import configparser
 
@@ -26,3 +26,6 @@ if __name__ == '__main__':
 
     train_new.drop(columns=config["to_delete_features"]["features"].split(","), inplace=True)
     test_new = test_new[train_data.columns]
+
+    fq = FourthQuantileGapOutlierRecognizer(list(train_new.columns))
+    fq.fit_transform(train_new)

@@ -30,8 +30,10 @@ class ThreeSigmaOutlierRecognizer(object):
         bottom = self.stat_statis[0][0]
         up = self.stat_statis[0][1]
         for feature in self.features:
-
-            x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & (x_new[feature] <= up.loc[feature]), :]
+            self.outlier_stat[feature] = len(x.loc[(x[feature] >= bottom.loc[feature]) &\
+                                                   (x[feature] <= up.loc[feature]),:]) / len(x)
+            x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & \
+                              (x_new[feature] <= up.loc[feature]), :]
         return x_new
 
 class FourthQuantileGapOutlierRecognizer(object):
@@ -39,6 +41,7 @@ class FourthQuantileGapOutlierRecognizer(object):
         self.features = features
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
+        self.outlier_stat = {}
         self.__data_type = ['int8','int16','int32','int64', 'float16','float32','float64']
 
     def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
@@ -56,7 +59,10 @@ class FourthQuantileGapOutlierRecognizer(object):
         bottom = self.stat_statis[0][0]
         up = self.stat_statis[0][1]
         for feature in self.features:
-            x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & (x_new[feature] <= up.loc[feature]), :]
+            self.outlier_stat[feature] = len(x.loc[(x[feature] >= bottom.loc[feature]) & \
+                                                   (x[feature] <= up.loc[feature]), :]) / len(x)
+            x_new = x_new.loc[(x_new[feature] >= bottom.loc[feature]) & \
+                              (x_new[feature] <= up.loc[feature]), :]
         return x_new
 
 class ObjectNumberNotEnoughOutlierRecognizer(object):

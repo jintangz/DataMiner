@@ -12,10 +12,11 @@ class ThreeSigmaOutlierRecognizer(object):
         self.features = features
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
+        self.__data_type = ['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
     def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
-        features.intersection_update(set(x_train.select_dtypes(['int','float']).columns))
+        features.intersection_update(set(x_train.select_dtypes(self.__data_type).columns))
         up_limit = x_train[features].mean() + x_train[features].std() * 3
         bottom_limit = x_train[features].mean() - x_train[features].std() * 3
         self.features = features
@@ -35,10 +36,11 @@ class FourthQuantileGapOutlierRecognizer(object):
         self.features = features
         self.feature_type = FeatureType.NUMBER
         self.stat_statis = []
+        self.__data_type = ['int8','int16','int32','int64', 'float16','float32','float64']
 
     def fit_transform(self, x_train:pd.DataFrame)->pd.DataFrame:
         features = set(self.features)
-        features.intersection_update(set(x_train.select_dtypes(['int8','int16','int32','int64', 'float16','float32','float64']).columns))
+        features.intersection_update(set(x_train.select_dtypes(self.__data_type).columns))
         fourth_quantile_gap = x_train[features].quantile(0.75) - x_train[features].quantile(0.25)
         bottom_limit = x_train[features].quantile(0.25) - 1.5 * fourth_quantile_gap
         up_limit = x_train[features].quantile(0.75) + 1.5 * fourth_quantile_gap

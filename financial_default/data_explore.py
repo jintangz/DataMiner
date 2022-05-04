@@ -9,7 +9,8 @@ from tryTorch.DataCompressor import DataCompressor
 from tryTorch.OutlierHandler import FourthQuantileGapOutlierRecognizer, ThreeSigmaOutlierRecognizer
 from utils.logger import logger
 
-def get_feature_nan_statis(data:pd.DataFrame)->pd.DataFrame:
+
+def get_feature_nan_statis(data: pd.DataFrame) -> pd.DataFrame:
     df = data.isnull().sum() / len(data)
     df = df.loc[df > 0].sort_values(ascending=False)
     contains_nan_cols_ratio = data.isnull().any().sum() / len(data.columns)
@@ -24,20 +25,22 @@ def get_feature_nan_statis(data:pd.DataFrame)->pd.DataFrame:
     plt.show()
     return df
 
-def get_target_distribution(target:pd.Series)->pd.DataFrame:
+
+def get_target_distribution(target: pd.Series) -> pd.DataFrame:
     values = set(target)
-    data_dict = {value: [(target==value).sum() / len(target)] for value in values}
+    data_dict = {value: [(target == value).sum() / len(target)] for value in values}
     print("===================target distribution===============================")
     df = pd.DataFrame(data_dict)
     for col in df.columns:
-        print(f"============{col}类占比：{df.loc[0,col]}=========================")
+        print(f"============{col}类占比：{df.loc[0, col]}=========================")
     fig, ax = plt.subplots(1, 1)
     ax.bar(list(map(str, df.columns)), df.loc[0, :].values)
     ax.set_title("目标值分布")
     plt.show()
     return df
 
-def get_outlier_stat_distribution(ser:dict)->pd.Series:
+
+def get_outlier_stat_distribution(ser: dict) -> pd.Series:
     ser = pd.Series(ser).sort_values(ascending=False)
     print("=====================异常值占比=======================================")
     fig, ax = plt.subplots(1, 1)
@@ -49,7 +52,8 @@ def get_outlier_stat_distribution(ser:dict)->pd.Series:
     plt.show()
     return ser
 
-def get_skew_and_distribution_of_feature(features, data:pd.DataFrame, rows, cols)->dict:
+
+def get_skew_and_distribution_of_feature(features, data: pd.DataFrame, rows, cols) -> dict:
     """
     获取特征的核密度图，返回特征的偏度
     :param features:
@@ -69,6 +73,51 @@ def get_skew_and_distribution_of_feature(features, data:pd.DataFrame, rows, cols
     plt.show()
     return {feature: value if isinstance(value, float) else value.data.min() for feature, value in skews.items()}
 
+def get_category_feature_target_distribute(rows, cols,features, data, target, topn=10):
+    """
+    展示二分类型特征在不同的target下的比率
+    :param rows: 画布的行数
+    :param cols: 画布的列数
+    :param features: 类别型特征
+    :param data: 数据
+    :param target: 目标变量
+    :param topn: 取排名topn的子类别
+    :return:
+    """
+    df = data[features].copy()
+    target_name = None
+    fig = plt.figure(figsize=(rows * 5, cols *3))
+    if isinstance(target, str):
+        target_name = target
+    elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
+        df['y'] = target
+        target_name = 'y'
+    else:
+        print("===========please check your target variable================")
+        return
+    m_rows = len(features) // cols
+    for i in range(m_rows * cols):
+        row = i // cols
+        col = i % cols
+        df[target_name] = df[target_name].astype(np.float64)
+        tmp = df.groupby(features[i])[target_name].apply(np.nanmean).sort_values(ascending=False).head(topn)
+        ax = plt.subplot2grid((rows, cols),(row, col), colspan=1, rowspan = 1, fig=fig)
+        ax.bar(tmp.index, tmp.values)
+        ax.xaxis.set_tick_params(rotation=45)
+    over_num = len(features) - cols * m_rows
+    if over_num == 0:
+        return
+    else:
+        for i in range(cols * m_rows, len(features)):
+            row = i // cols
+            col = i % cols
+            colspan = 1 if i != len(features)-1 else cols - col
+            df[target_name] = df[target_name].astype(np.float64)
+            tmp = df.groupby(features[i])[target_name].apply(np.nanmean).sort_values(ascending=False).head(topn)
+            ax = plt.subplot2grid((rows, cols),(row, col), colspan=colspan, rowspan = 1, fig=fig)
+            ax.bar(tmp.index, tmp.values)
+            ax.xaxis.set_tick_params(rotation=45)
+    fig.show()
 
 if __name__ == '__main__':
     import configparser
@@ -111,4 +160,4 @@ if __name__ == '__main__':
     ts.fit_transform(train_new)
     print(ts.outlier_stat)
 
-    print(get_skew_and_distribution_of_feature(float_features+int_features, train_new, 7, 4))
+    print(get_skew_and_distribution_of_feature(float_features + int_features, train_new, 7, 4))

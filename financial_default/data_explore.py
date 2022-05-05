@@ -73,7 +73,8 @@ def get_skew_and_distribution_of_feature(features, data: pd.DataFrame, rows, col
     plt.show()
     return {feature: value if isinstance(value, float) else value.data.min() for feature, value in skews.items()}
 
-def get_category_feature_target_distribute(rows, cols,features, data, target, topn=10):
+
+def get_category_feature_target_distribute(rows, cols, features, data, target, topn=10):
     """
     展示二分类型特征在不同的target下的比率
     :param rows: 画布的行数
@@ -86,8 +87,9 @@ def get_category_feature_target_distribute(rows, cols,features, data, target, to
     """
     df = data[features].copy()
     target_name = None
-    fig = plt.figure(figsize=(rows * 5, cols *3))
+    fig = plt.figure(figsize=(rows * 8, cols * 3))
     if isinstance(target, str):
+        y = df[target]
         target_name = target
     elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
         df['y'] = target
@@ -101,9 +103,10 @@ def get_category_feature_target_distribute(rows, cols,features, data, target, to
         col = i % cols
         df[target_name] = df[target_name].astype(np.float64)
         tmp = df.groupby(features[i])[target_name].apply(np.nanmean).sort_values(ascending=False).head(topn)
-        ax = plt.subplot2grid((rows, cols),(row, col), colspan=1, rowspan = 1, fig=fig)
+        ax = plt.subplot2grid((rows, cols), (row, col), colspan=1, rowspan=1, fig=fig)
         ax.bar(tmp.index, tmp.values)
         ax.xaxis.set_tick_params(rotation=45)
+        ax.xaxis.set_label(features[i])
     over_num = len(features) - cols * m_rows
     if over_num == 0:
         return
@@ -111,13 +114,16 @@ def get_category_feature_target_distribute(rows, cols,features, data, target, to
         for i in range(cols * m_rows, len(features)):
             row = i // cols
             col = i % cols
-            colspan = 1 if i != len(features)-1 else cols - col
+            colspan = 1 if i != len(features) - 1 else cols - col
             df[target_name] = df[target_name].astype(np.float64)
             tmp = df.groupby(features[i])[target_name].apply(np.nanmean).sort_values(ascending=False).head(topn)
-            ax = plt.subplot2grid((rows, cols),(row, col), colspan=colspan, rowspan = 1, fig=fig)
+            ax = plt.subplot2grid((rows, cols), (row, col), colspan=colspan, rowspan=1, fig=fig)
             ax.bar(tmp.index, tmp.values)
             ax.xaxis.set_tick_params(rotation=45)
+            ax.xaxis.set_label(features[i])
     fig.show()
+
+
 
 if __name__ == '__main__':
     import configparser

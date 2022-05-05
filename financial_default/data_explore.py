@@ -1,6 +1,9 @@
+from typing import Union
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import stats
 from scipy.stats import skew
 import seaborn as sns
 
@@ -123,7 +126,35 @@ def get_category_feature_target_distribute(rows, cols, features, data, target, t
             ax.xaxis.set_label(features[i])
     fig.show()
 
-
+def one_factor_va(feature:str, data:pd.DataFrame, target, alpha:float=0.05)->tuple:
+    """
+    返回单因素方差分析的P值，以及是否拒绝原假设，接受类别变量和目标变量相关的备择假设
+    :param feature: 类别特征
+    :param data: 数据
+    :param target: 目标变量
+    :param alpha: 显著性水平
+    :return: （p-value, True or False）
+    """
+    df = data.copy()
+    if isinstance(target, str):
+        target_name = target
+    elif isinstance(target, pd.core.series.Series)or isinstance(target, np.ndarray):
+        target_name = 'y'
+        df['y'] = target
+    else:
+        print("===========please check your target variable================")
+        return
+    tmp = df.groupby(by=feature).agg({target_name:('var', 'count')})
+    tmp.columns = list(map(lambda x: x[1], tmp.columns))
+    SSE = tmp.assign(sse=lambda x: x['var'] * x['count'])\
+            .sse.astype(np.float64).sum()
+    SST = df[target_name].astype(np.float64).var()*len(df)
+    SSA = SST - SSE
+    k = len(df[feature].drop_duplicates())
+    MSE = SSE / (len(df) - k)
+    MSA = SSA / (k - 1)
+    p_value = stats.f.sf(MSA/MSE, k-1, len(df) - k)
+    return p_value, p_value < alpha
 
 if __name__ == '__main__':
     import configparser
@@ -157,13 +188,15 @@ if __name__ == '__main__':
     float_features = config["float_features"]["features"].split(",")
     int_features = config["int_features"]["features"].split(",")
 
-    print(get_feature_nan_statis(train_new))
-    print(get_target_distribution(Y))
-    fq = FourthQuantileGapOutlierRecognizer(float_features)
-    fq.fit_transform(train_new)
-    print(get_outlier_stat_distribution(fq.outlier_stat))
-    ts = ThreeSigmaOutlierRecognizer(float_features)
-    ts.fit_transform(train_new)
-    print(ts.outlier_stat)
+    # print(get_feature_nan_statis(train_new))
+    # print(get_target_distribution(Y))
+    # fq = FourthQuantileGapOutlierRecognizer(float_features)
+    # fq.fit_transform(train_new)
+    # print(get_outlier_stat_distribution(fq.outlier_stat))
+    # ts = ThreeSigmaOutlierRecognizer(float_features)
+    # ts.fit_transform(train_new)
+    # print(ts.outlier_stat)
+    #
+    # print(get_skew_and_distribution_of_feature(float_features + int_features, train_new, 7, 4))
 
-    print(get_skew_and_distribution_of_feature(float_features + int_features, train_new, 7, 4))
+    print(one_factor_va('grade', train_new, Y))

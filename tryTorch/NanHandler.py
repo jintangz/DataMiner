@@ -7,10 +7,16 @@ class AggMethod(Enum):
     MODE = 3
 
 class NanHandler(object):
-    """
+    __doc__ = """
     空值处理器,实现分组均值填充、中位数填充、众数填充
     """
-    def __init__(self, fill_cols, category_features=None, method:int =AggMethod.MEAN):
+    def __init__(self, fill_cols, category_features=None, method:int = 3):
+        """
+
+        :param fill_cols: 填充的列名
+        :param category_features: 按类别特征分组进行填充
+        :param method: 填充方法
+        """
         self.fill_cols = fill_cols
         self.category_features = category_features
         self.method = method
@@ -39,22 +45,22 @@ class NanHandler(object):
 
     @staticmethod
     def group_stat(x: pd.DataFrame, method):
-        if method == AggMethod.MEAN:
+        if method == AggMethod.MEAN.value:
             return x.mean()
-        elif method == AggMethod.MEDIAN:
+        elif method == AggMethod.MEDIAN.value:
             return x.median()
-        elif method == AggMethod.MODE:
+        elif method == AggMethod.MODE.value:
             return x.mode().iloc[0, :]
         else:
             return
 
     @staticmethod
     def my_fillna(x: pd.DataFrame, method):
-        if method == AggMethod.MEAN:
+        if method == AggMethod.MEAN.value:
             return x.fillna(x.mean())
-        elif method == AggMethod.MEDIAN:
+        elif method == AggMethod.MEDIAN.value:
             return x.fillna(x.median())
-        elif method == AggMethod.MODE:
+        elif method == AggMethod.MODE.value:
             return x.fillna(x.mode().iloc[0, :])
         else: return
 

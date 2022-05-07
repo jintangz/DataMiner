@@ -9,6 +9,7 @@ import seaborn as sns
 
 from tryTorch.CSVDataReader import CSVDataReader
 from tryTorch.DataCompressor import DataCompressor
+from tryTorch.NanHandler import NanHandler
 from tryTorch.OutlierHandler import FourthQuantileGapOutlierRecognizer, ThreeSigmaOutlierRecognizer
 from utils.logger import logger
 
@@ -126,7 +127,8 @@ def get_category_feature_target_distribute(rows, cols, features, data, target, t
             ax.xaxis.set_label(features[i])
     fig.show()
 
-def one_factor_va(feature:str, data:pd.DataFrame, target, alpha:float=0.05)->tuple:
+
+def one_factor_va(feature: str, data: pd.DataFrame, target, alpha: float = 0.05) -> tuple:
     """
     返回单因素方差分析的P值，以及是否拒绝原假设，接受类别变量和目标变量相关的备择假设
     :param feature: 类别特征
@@ -138,23 +140,47 @@ def one_factor_va(feature:str, data:pd.DataFrame, target, alpha:float=0.05)->tup
     df = data.copy()
     if isinstance(target, str):
         target_name = target
-    elif isinstance(target, pd.core.series.Series)or isinstance(target, np.ndarray):
+    elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
         target_name = 'y'
         df['y'] = target
     else:
         print("===========please check your target variable================")
         return
-    tmp = df.groupby(by=feature).agg({target_name:('var', 'count')})
+    tmp = df.groupby(by=feature).agg({target_name: ('var', 'count')})
     tmp.columns = list(map(lambda x: x[1], tmp.columns))
-    SSE = tmp.assign(sse=lambda x: x['var'] * x['count'])\
-            .sse.astype(np.float64).sum()
-    SST = df[target_name].astype(np.float64).var()*len(df)
+    SSE = tmp.assign(sse=lambda x: x['var'] * x['count']) \
+        .sse.astype(np.float64).sum()
+    SST = df[target_name].astype(np.float64).var() * len(df)
     SSA = SST - SSE
     k = len(df[feature].drop_duplicates())
     MSE = SSE / (len(df) - k)
     MSA = SSA / (k - 1)
-    p_value = stats.f.sf(MSA/MSE, k-1, len(df) - k)
+    p_value = stats.f.sf(MSA / MSE, k - 1, len(df) - k)
     return p_value, p_value < alpha
+
+
+def get_kde_by_target(features: list, data: pd.DataFrame, target, cols: int, rows: int):
+    df = data.copy()
+    if isinstance(target, str):
+        target_name = target
+    elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
+        target_name = 'y'
+        df['y'] = target
+    else:
+        print("===========please check your target variable================")
+        return
+    fig = plt.figure(figsize=(rows * 8, cols * 3))
+    for i, feature in enumerate(features):
+        row, col = i // rows, i % cols
+        if i < len(features) - 1:
+            ax = plt.subplot2grid((rows, cols), (row, col))
+        else:
+            ax = plt.subplot2grid((rows, cols), (row, col), colspan=rows * cols - i)
+        sns.kdeplot(df[feature], hue=df[target_name], ax=ax)
+    fig.show()
+
+
+
 
 if __name__ == '__main__':
     import configparser
@@ -199,4 +225,6 @@ if __name__ == '__main__':
     #
     # print(get_skew_and_distribution_of_feature(float_features + int_features, train_new, 7, 4))
 
-    print(one_factor_va('grade', train_new, Y))
+    # print(one_factor_va('grade', train_new, Y))
+    nh = NanHandler(category_features, method=3)
+    nh.fit_transform(train_new)

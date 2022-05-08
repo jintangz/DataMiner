@@ -160,24 +160,29 @@ def one_factor_va(feature: str, data: pd.DataFrame, target, alpha: float = 0.05)
 
 
 def get_kde_by_target(features: list, data: pd.DataFrame, target, cols: int, rows: int):
-    df = data.copy()
-    if isinstance(target, str):
-        target_name = target
-    elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
-        target_name = 'y'
-        df['y'] = target
-    else:
-        print("===========please check your target variable================")
-        return
-    fig = plt.figure(figsize=(rows * 8, cols * 3))
-    for i, feature in enumerate(features):
-        row, col = i // rows, i % cols
-        if i < len(features) - 1:
-            ax = plt.subplot2grid((rows, cols), (row, col))
+    # 计算连续型特征在不同的目标变量下的kde
+    def get_kde_by_target(features: list, data: pd.DataFrame, target, cols, rows):
+        df = data.copy()
+        if isinstance(target, str):
+            target_name = target
+        elif isinstance(target, pd.core.series.Series) or isinstance(target, np.ndarray):
+            target_name = 'y'
+            df['y'] = target
         else:
-            ax = plt.subplot2grid((rows, cols), (row, col), colspan=rows * cols - i)
-        sns.kdeplot(df[feature], hue=df[target_name], ax=ax)
-    fig.show()
+            print("===========please check your target variable================")
+            return
+        target_values = set(df[target_name])
+        fig = plt.figure(figsize=(rows * 8, cols * 3))
+        for i, feature in enumerate(features):
+            row, col = i // rows, i % cols
+            if i < len(features) - 1:
+                ax = plt.subplot2grid((rows, cols), (row, col))
+            else:
+                ax = plt.subplot2grid((rows, cols), (row, col), colspan=rows * cols - i)
+            sns.kdeplot(df[feature], hue=df[target_name], ax=ax)
+        fig.suptitle("分预测值不同特征核密度分布")
+        fig.subplots_adjust(hspace=0.2, wspace=0.2)
+        fig.show()
 
 
 

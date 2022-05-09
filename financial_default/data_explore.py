@@ -1,3 +1,4 @@
+from itertools import product
 from typing import Union
 
 import pandas as pd
@@ -130,7 +131,7 @@ def get_category_feature_target_distribute(rows, cols, features, data, target, t
 
 def one_factor_va(feature: str, data: pd.DataFrame, target, alpha: float = 0.05) -> tuple:
     """
-    返回单因素方差分析的P值，以及是否拒绝原假设，接受类别变量和目标变量相关的备择假设
+    返回单因素方差分析的P值，以及是否拒绝原假设，接受类别变量和连续变量(0-1变量也可以)相关的备择假设
     :param feature: 类别特征
     :param data: 数据
     :param target: 目标变量
@@ -160,7 +161,16 @@ def one_factor_va(feature: str, data: pd.DataFrame, target, alpha: float = 0.05)
 
 
 def get_kde_by_target(features: list, data: pd.DataFrame, target, cols: int, rows: int):
-    # 计算连续型特征在不同的目标变量下的kde
+    """
+    计算连续型特征在不同的目标变量下的kde
+    如果特征kde在类别变量的不同取值下分的更开，那么这个特征就可以很好的区分类别变量
+    :param features:
+    :param data:
+    :param target:
+    :param cols:
+    :param rows:
+    :return:
+    """
     df = data.copy()
     if isinstance(target, str):
         target_name = target
@@ -184,6 +194,97 @@ def get_kde_by_target(features: list, data: pd.DataFrame, target, cols: int, row
     fig.show()
 
 
+def get_hist_on_category_feature(data, category_feature, float_features):
+    """
+    分类别特征的直方图分布
+    针对分类任务，如果不同目标变量取值下，连续型特征的分布差别较大(交叉部分很大)，那么这个特征将会是较好的特征
+    :param data:
+    :param category_feature:
+    :param float_features:
+    :return:
+    """
+    if isinstance(category_feature, str):
+        c_feature_name = category_feature
+        c_feature_value = data[category_feature]
+    elif isinstance(category_feature, pd.core.series.Series) or isinstance(category_feature, np.ndarray):
+        c_feature_value = category_feature
+        c_feature_name = 'category_feature'
+    else:
+        print("===============please check category feature inputed===================")
+        return
+    cols = 3
+    rows = (len(float_features) - 1) // 3 + 1
+    df = data[float_features].copy()
+    df[c_feature_name] = c_feature_value
+    fig = plt.figure(figsize=(rows * 5, cols * 3))
+    for row, col in product(range(rows), range(cols)):
+        if row * cols + col < len(float_features) - 1:
+            ax = plt.subplot2grid((rows, cols), (row, col))
+            sns.histplot(data=df, x=float_features[row * cols + col], hue=c_feature_name, ax=ax)
+        elif row * cols + col == len(float_features) - 1:
+            ax = plt.subplot2grid((rows, cols), (row, col), colspan=rows * cols - len(float_features) + 1)
+            sns.histplot(data=df, x=float_features[row * cols + col], hue=c_feature_name, ax=ax)
+        else:
+            break
+    fig.show()
+
+
+def get_box_on_category_feature(data, category_feature, float_features):
+    """
+    连续型变量在不同分类型特征下的箱线图
+    1.针对分类任务而言
+        一方面可以得出连续型特征的异常值分布情况。
+        另一方面还可以根据不同分类特征的取值下箱子的交叉部分，交叉越少说明此特征越容易区分出这个分类特征
+    2.对回归任务而言
+        一方面可以观察目标变量在类别特征下的异常值分布情况。
+        另一方面还可以根据不同类别下的箱子的中值线的高低变化，看出此分类变量与目标变量的相关性
+    :param data:
+    :param category_feature:
+    :param float_features:
+    :return:
+    """
+    if isinstance(category_feature, str):
+        c_feature_name = category_feature
+        c_feature_value = data[category_feature]
+    elif isinstance(category_feature, pd.core.series.Series) or isinstance(np.ndarray):
+        c_feature_value = category_feature
+        c_feature_name = 'category_feature'
+    else:
+        print("===============please check category feature inputed===================")
+        return
+    cols = 3
+    rows = (len(float_features) - 1) // 3 + 1
+    df = data[float_features].copy()
+    df[c_feature_name] = c_feature_value
+    fig = plt.figure(figsize=(rows * 5, cols * 3))
+    for row, col in product(range(rows), range(cols)):
+        if row * cols + col < len(float_features) - 1:
+            ax = plt.subplot2grid((rows, cols), (row, col))
+            sns.boxplot(data=df, y=float_features[row * cols + col], x=c_feature_name, ax=ax)
+        elif row * cols + col == len(float_features) - 1:
+            ax = plt.subplot2grid((rows, cols), (row, col), colspan=rows * cols - len(float_features) + 1)
+            sns.boxplot(data=df, y=float_features[row * cols + col], x=c_feature_name, ax=ax)
+        else:
+            break
+    fig.show()
+    sns.boxplot()
+
+
+def get_heatmap(data, float_features):
+    """
+    连续变量相关性
+    热度图的作用
+        1.如果某列的存在较多缺失值或者异常值，可以选择保留与此列相关的特征，然后删除此特征
+        2.保留与预测目标变量相关性更高的特征，然后删除与此特征高度相关的特征
+    :param data:
+    :param float_features:
+    :return:
+    """
+    corr_matrix = data[float_features].corr()
+    fig = plt.figure()
+    ax = plt.subplot(1, 1, 1)
+    sns.heatmap(corr_matrix, ax=ax)
+    fig.show()
 
 
 if __name__ == '__main__':
